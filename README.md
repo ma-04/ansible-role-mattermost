@@ -1,11 +1,12 @@
 # Ansible Role: Mattermost
 
 Installs and configures [Mattermost](https://mattermost.com/) (Team Edition) from the
-official tarball under systemd.
+official Mattermost APT repository.
 
 ## Features
 
-- **Tarball + systemd** install to `/opt/mattermost` (atomic, versioned, upgrade-friendly).
+- **APT install** from the official Mattermost repository (`deb.packages.mattermost.com`) to
+  `/opt/mattermost`, using the package's systemd unit (upgrades via `apt` / version bump).
 - **Database**: install a **local PostgreSQL** or connect to an **external** managed PostgreSQL.
 - **nginx reverse proxy** with your choice of TLS:
   - Let's Encrypt (certbot, webroot),
@@ -32,7 +33,7 @@ See [`defaults/main.yml`](defaults/main.yml) for the full, documented list. The 
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `mattermost_version` | `9.11.9` | Version to install. |
+| `mattermost_version` | `""` | APT version to pin (e.g. `9.11.9`); empty installs the latest in the repo. |
 | `mattermost_site_url` | `""` | **Required.** Public URL, e.g. `https://chat.example.com`. |
 | `mattermost_db_type` | `local` | `local` (role installs PostgreSQL) or `external`. |
 | `mattermost_db_password` | `""` | **Required.** Store in Vault. |
@@ -100,10 +101,10 @@ Secrets (`mattermost_db_password`, `mattermost_gitlab_client_secret`,
 
 ## Upgrades
 
-Bump `mattermost_version` and re-run. The new tarball is extracted to
-`/opt/mattermost-<version>`, the `/opt/mattermost` symlink is repointed, and the service restarts.
-Config (`/etc/mattermost`) and data (`/var/opt/mattermost`) live outside the versioned dir and are
-untouched.
+Set `mattermost_version` to a newer APT version (or leave it empty and run `apt upgrade
+mattermost`) and re-run the role. The package is upgraded in place and the service restarts.
+Config (`/opt/mattermost/config/config.json`) and data (`/opt/mattermost/data`) are managed
+separately from the package files and are preserved across upgrades.
 
 ## Testing
 

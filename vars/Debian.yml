@@ -1,8 +1,9 @@
 ---
 # Debian/Ubuntu package names.
 mattermost_base_packages:
-  - tar
   - ca-certificates
+  - curl
+  - gnupg
 mattermost_postgresql_packages:
   - postgresql
   - postgresql-contrib

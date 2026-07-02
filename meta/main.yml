@@ -4,8 +4,8 @@ galaxy_info:
   namespace: community
   author: ma-04
   description: >-
-    Install and configure Mattermost (Team Edition) from the official tarball
-    under systemd, with a local or external PostgreSQL database, an nginx reverse
+    Install and configure Mattermost (Team Edition) from the official Mattermost
+    APT repository, with a local or external PostgreSQL database, an nginx reverse
     proxy with Let's Encrypt or Cloudflare Origin TLS, optional Cloudflare API
     integration (DNS record + zone SSL mode), and GitLab/OIDC OAuth SSO.
   license: MIT

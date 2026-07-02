@@ -1,0 +1,4 @@
+{{ ansible_managed | comment }}
+[Unit]
+After={{ mattermost_postgresql_service }}.service
+Requires={{ mattermost_postgresql_service }}.service

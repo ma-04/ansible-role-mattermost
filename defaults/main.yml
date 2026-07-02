@@ -1,30 +1,26 @@
 ---
 # =============================================================================
-# Version / installation
+# Installation (official Mattermost APT repository, Team Edition)
 # =============================================================================
-# Mattermost version to install. See https://docs.mattermost.com/about/version-archive.html
-mattermost_version: "9.11.9"
-# Edition: "team" (free, GitLab OAuth) or "enterprise" (needs a license for OIDC/SAML).
-mattermost_edition: "team"
-# Optional checksum for the downloaded tarball, e.g. "sha256:abc123...".
-# Leave empty to skip verification (not recommended for production).
-mattermost_checksum: ""
+# APT package version to pin, e.g. "9.11.9". Leave empty to install the latest
+# version available in the repository. To upgrade later, bump this and re-run.
+mattermost_version: ""
+mattermost_package: "mattermost"
 
-# Where the (versioned) Mattermost binaries live. This path is a symlink that
-# points at /opt/mattermost-<version>, which makes upgrades atomic.
+# Official Mattermost APT repository.
+mattermost_apt_repo_url: "https://deb.packages.mattermost.com"
+mattermost_apt_key_url: "https://deb.packages.mattermost.com/pubkey.gpg"
+mattermost_apt_keyring: "/usr/share/keyrings/mattermost-archive-keyring.gpg"
+
+# Paths owned by the package. Change only if you repackage Mattermost.
 mattermost_install_dir: "/opt/mattermost"
-
-# Dedicated service account.
 mattermost_user: "mattermost"
 mattermost_group: "mattermost"
-
-# Persistent paths kept OUTSIDE the versioned dir so upgrades never touch data.
-mattermost_config_dir: "/etc/mattermost"
-mattermost_config_path: "{{ mattermost_config_dir }}/config.json"
-mattermost_data_dir: "/var/opt/mattermost/data"
-mattermost_log_dir: "/var/opt/mattermost/logs"
-mattermost_plugin_dir: "/var/opt/mattermost/plugins"
-mattermost_plugin_client_dir: "/var/opt/mattermost/client-plugins"
+mattermost_config_path: "{{ mattermost_install_dir }}/config/config.json"
+mattermost_data_dir: "{{ mattermost_install_dir }}/data"
+mattermost_log_dir: "{{ mattermost_install_dir }}/logs"
+mattermost_plugin_dir: "{{ mattermost_install_dir }}/plugins"
+mattermost_plugin_client_dir: "{{ mattermost_install_dir }}/client/plugins"
 
 # =============================================================================
 # Site / domain

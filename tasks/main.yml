@@ -13,10 +13,6 @@
   ansible.builtin.import_tasks: preflight.yml
   tags: [always]
 
-- name: Create service account
-  ansible.builtin.import_tasks: user.yml
-  tags: [install]
-
 - name: Install Mattermost
   ansible.builtin.import_tasks: install.yml
   tags: [install]
