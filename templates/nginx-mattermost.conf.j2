@@ -49,9 +49,8 @@ server {
 
 {% if stage == 'final' and tls != 'none' %}
 server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
-    http2 on;
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
     server_name {{ mattermost_domain }};
 
     ssl_certificate {{ mattermost_tls_cert_path }};

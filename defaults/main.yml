@@ -2,9 +2,16 @@
 # =============================================================================
 # Installation (official Mattermost APT repository, Team Edition)
 # =============================================================================
-# APT package version to pin, e.g. "9.11.9". Leave empty to install the latest
-# version available in the repository. To upgrade later, bump this and re-run.
+# Edition to install. The Mattermost APT repository ships a single server package
+# that runs as the free community edition unless an Enterprise license is applied,
+# so "community" is the default (and the supported value for this role).
+mattermost_edition: "community"
+
+# Version to install, e.g. "11.8.2". Leave empty to install the latest release
+# available in the repository. The packaging revision below is appended
+# automatically, so "11.8.2" resolves to the APT version "11.8.2-0".
 mattermost_version: ""
+mattermost_package_revision: "0"
 mattermost_package: "mattermost"
 
 # Official Mattermost APT repository.

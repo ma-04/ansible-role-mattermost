@@ -10,6 +10,15 @@
       are all required. Store secrets in Ansible Vault.
     quiet: true
 
+- name: Assert edition is supported
+  ansible.builtin.assert:
+    that:
+      - mattermost_edition == 'community'
+    fail_msg: >-
+      Only mattermost_edition=community is supported. The APT 'mattermost' package runs
+      the free community edition; apply an Enterprise license out of band to unlock EE features.
+    quiet: true
+
 - name: Assert database type is valid
   ansible.builtin.assert:
     that:

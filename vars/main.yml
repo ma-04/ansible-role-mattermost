@@ -3,8 +3,11 @@
 
 # APT source line for the official Mattermost repository (suite = OS codename).
 mattermost_apt_repo_line: "deb [signed-by={{ mattermost_apt_keyring }}] {{ mattermost_apt_repo_url }} {{ ansible_facts.distribution_release }} main"
+# Full APT version, appending the packaging revision when the user gives a bare
+# upstream version (e.g. "11.8.2" -> "11.8.2-0"; "11.8.2-0" is used as-is).
+mattermost_version_full: "{{ mattermost_version if ('-' in mattermost_version) else (mattermost_version ~ '-' ~ mattermost_package_revision) }}"
 # Package spec, optionally pinned to a version.
-mattermost_package_spec: "{{ mattermost_package }}{{ ('=' + mattermost_version) if (mattermost_version | length > 0) else '' }}"
+mattermost_package_spec: "{{ mattermost_package }}{{ ('=' + mattermost_version_full) if (mattermost_version | length > 0) else '' }}"
 
 # Effective DB connection parameters (local mode overrides host/ssl).
 mattermost_db_host_effective: "{{ '127.0.0.1' if mattermost_db_type == 'local' else mattermost_db_host }}"

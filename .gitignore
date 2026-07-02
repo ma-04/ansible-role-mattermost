@@ -1,6 +1,8 @@
+vars.yml
 *.retry
 *.pyc
 __pycache__/
 .venv/
 .cache/
 collections/
+.ansible/

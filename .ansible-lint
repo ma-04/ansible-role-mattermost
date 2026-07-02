@@ -4,6 +4,10 @@ profile: production
 exclude_paths:
   - .github/
   - molecule/
+  - .ansible/
+  # Deployment harness: references the role by name and is linted from within
+  # deploy/ (which has its own ansible.cfg with roles_path), not from the repo root.
+  - deploy/
 
 skip_list:
   - var-naming[no-role-prefix]  # some internal facts are intentionally _-prefixed

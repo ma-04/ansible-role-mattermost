@@ -33,7 +33,8 @@ See [`defaults/main.yml`](defaults/main.yml) for the full, documented list. The 
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `mattermost_version` | `""` | APT version to pin (e.g. `9.11.9`); empty installs the latest in the repo. |
+| `mattermost_edition` | `community` | Edition to install. The APT server package runs as the free community edition. |
+| `mattermost_version` | `""` | Version to pin, e.g. `11.8.2` (the `-0` revision is appended automatically); empty installs the latest. |
 | `mattermost_site_url` | `""` | **Required.** Public URL, e.g. `https://chat.example.com`. |
 | `mattermost_db_type` | `local` | `local` (role installs PostgreSQL) or `external`. |
 | `mattermost_db_password` | `""` | **Required.** Store in Vault. |
