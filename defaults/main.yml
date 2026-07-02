@@ -1,0 +1,104 @@
+---
+# =============================================================================
+# Version / installation
+# =============================================================================
+# Mattermost version to install. See https://docs.mattermost.com/about/version-archive.html
+mattermost_version: "9.11.9"
+# Edition: "team" (free, GitLab OAuth) or "enterprise" (needs a license for OIDC/SAML).
+mattermost_edition: "team"
+# Optional checksum for the downloaded tarball, e.g. "sha256:abc123...".
+# Leave empty to skip verification (not recommended for production).
+mattermost_checksum: ""
+
+# Where the (versioned) Mattermost binaries live. This path is a symlink that
+# points at /opt/mattermost-<version>, which makes upgrades atomic.
+mattermost_install_dir: "/opt/mattermost"
+
+# Dedicated service account.
+mattermost_user: "mattermost"
+mattermost_group: "mattermost"
+
+# Persistent paths kept OUTSIDE the versioned dir so upgrades never touch data.
+mattermost_config_dir: "/etc/mattermost"
+mattermost_config_path: "{{ mattermost_config_dir }}/config.json"
+mattermost_data_dir: "/var/opt/mattermost/data"
+mattermost_log_dir: "/var/opt/mattermost/logs"
+mattermost_plugin_dir: "/var/opt/mattermost/plugins"
+mattermost_plugin_client_dir: "/var/opt/mattermost/client-plugins"
+
+# =============================================================================
+# Site / domain
+# =============================================================================
+# Public URL users hit, e.g. "https://chat.example.com". REQUIRED.
+mattermost_site_url: ""
+# Bare hostname used for the nginx vhost / TLS / Cloudflare, e.g. "chat.example.com".
+mattermost_domain: "{{ mattermost_site_url | regex_replace('^https?://', '') | regex_replace('/.*$', '') }}"
+# Mattermost app listen address. Bind to localhost when a proxy sits in front.
+mattermost_bind_address: "127.0.0.1"
+mattermost_listen_port: 8065
+# Max upload size proxied by nginx.
+mattermost_max_file_size: "50M"
+
+# =============================================================================
+# Database
+# =============================================================================
+# "local"  -> this role installs PostgreSQL and creates the db + role.
+# "external" -> connect to an existing managed PostgreSQL (set host/port/ssl).
+mattermost_db_type: "local"
+mattermost_db_name: "mattermost"
+mattermost_db_user: "mattermost"
+mattermost_db_password: ""          # REQUIRED (store in Ansible Vault)
+mattermost_db_host: "127.0.0.1"     # used only when db_type == external
+mattermost_db_port: 5432
+mattermost_db_sslmode: "require"    # external default; local is forced to "disable"
+
+# =============================================================================
+# Reverse proxy / TLS
+# =============================================================================
+mattermost_nginx_enabled: true
+# TLS strategy: "letsencrypt", "cloudflare_origin", or "none" (plain http vhost).
+mattermost_tls_mode: "letsencrypt"
+# Let's Encrypt.
+mattermost_letsencrypt_email: ""
+mattermost_letsencrypt_webroot: "/var/www/certbot"
+# Cloudflare Origin certificate contents (paste PEM here, ideally via Vault).
+mattermost_ssl_dir: "/etc/ssl/mattermost"
+mattermost_cloudflare_origin_cert: ""
+mattermost_cloudflare_origin_key: ""
+
+# Open 80/443 (and the app port when no proxy) with ufw.
+mattermost_configure_firewall: false
+
+# =============================================================================
+# Cloudflare API integration (optional)
+# =============================================================================
+mattermost_cloudflare_enabled: false
+mattermost_cloudflare_api_token: ""   # scoped token (Zone:DNS edit, Zone:Settings edit)
+mattermost_cloudflare_zone: ""        # e.g. "example.com"
+# Feature toggles.
+mattermost_cloudflare_manage_dns: true
+mattermost_cloudflare_record_type: "A"
+mattermost_cloudflare_record_content: ""  # server public IP (or CNAME target)
+mattermost_cloudflare_proxied: true
+mattermost_cloudflare_manage_ssl: true
+mattermost_cloudflare_ssl_mode: "full"    # off|flexible|full|strict
+
+# =============================================================================
+# Auth: GitLab OAuth (Team Edition) / generic OIDC via GitLab connector
+# =============================================================================
+mattermost_gitlab_auth_enabled: false
+mattermost_gitlab_client_id: ""
+mattermost_gitlab_client_secret: ""       # store in Ansible Vault
+mattermost_gitlab_scope: ""
+# Endpoints. Defaults target gitlab.com; point these at any OIDC provider that
+# exposes GitLab-style OAuth endpoints (e.g. Keycloak) to do OIDC on TE.
+mattermost_gitlab_auth_endpoint: "https://gitlab.com/oauth/authorize"
+mattermost_gitlab_token_endpoint: "https://gitlab.com/oauth/token"
+mattermost_gitlab_user_api_endpoint: "https://gitlab.com/api/v4/user"
+mattermost_gitlab_button_text: ""
+mattermost_gitlab_button_color: ""
+
+# =============================================================================
+# Extra config.json overrides (deep-merged last over everything above)
+# =============================================================================
+mattermost_config_extra: {}

@@ -1,0 +1,25 @@
+---
+- name: Read current zone SSL mode
+  ansible.builtin.uri:
+    url: "{{ mattermost_cloudflare_api_base }}/zones/{{ mattermost_cf_zone_id }}/settings/ssl"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ mattermost_cloudflare_api_token }}"
+      Content-Type: "application/json"
+    status_code: 200
+  register: mattermost_cf_ssl
+  no_log: true
+
+- name: Set zone SSL mode
+  ansible.builtin.uri:
+    url: "{{ mattermost_cloudflare_api_base }}/zones/{{ mattermost_cf_zone_id }}/settings/ssl"
+    method: PATCH
+    headers:
+      Authorization: "Bearer {{ mattermost_cloudflare_api_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      value: "{{ mattermost_cloudflare_ssl_mode }}"
+    status_code: 200
+  no_log: true
+  when: mattermost_cf_ssl.json.result.value != mattermost_cloudflare_ssl_mode

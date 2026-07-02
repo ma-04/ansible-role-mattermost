@@ -1,0 +1,27 @@
+---
+- name: Create TLS directory
+  ansible.builtin.file:
+    path: "{{ mattermost_ssl_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Install Cloudflare Origin certificate
+  ansible.builtin.copy:
+    content: "{{ mattermost_cloudflare_origin_cert }}"
+    dest: "{{ mattermost_tls_cert_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Install Cloudflare Origin private key
+  ansible.builtin.copy:
+    content: "{{ mattermost_cloudflare_origin_key }}"
+    dest: "{{ mattermost_tls_key_path }}"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  notify: Reload nginx

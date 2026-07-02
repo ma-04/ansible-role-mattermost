@@ -1,0 +1,9 @@
+---
+profile: production
+
+exclude_paths:
+  - .github/
+  - molecule/
+
+skip_list:
+  - var-naming[no-role-prefix]  # some internal facts are intentionally _-prefixed

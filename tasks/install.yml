@@ -1,0 +1,62 @@
+---
+- name: Install base packages
+  ansible.builtin.package:
+    name: "{{ mattermost_base_packages }}"
+    state: present
+
+- name: Create persistent directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ mattermost_user }}"
+    group: "{{ mattermost_group }}"
+    mode: "0750"
+  loop:
+    - "{{ mattermost_config_dir }}"
+    - "{{ mattermost_data_dir }}"
+    - "{{ mattermost_log_dir }}"
+    - "{{ mattermost_plugin_dir }}"
+    - "{{ mattermost_plugin_client_dir }}"
+
+- name: Download Mattermost tarball
+  ansible.builtin.get_url:
+    url: "{{ mattermost_download_url }}"
+    dest: "/tmp/{{ mattermost_download_filename | trim }}"
+    checksum: "{{ mattermost_checksum | default(omit, true) }}"
+    mode: "0644"
+  register: mattermost_download
+
+- name: Create versioned install directory
+  ansible.builtin.file:
+    path: "{{ mattermost_versioned_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Extract Mattermost
+  ansible.builtin.unarchive:
+    src: "/tmp/{{ mattermost_download_filename | trim }}"
+    dest: "{{ mattermost_versioned_dir }}"
+    remote_src: true
+    extra_opts:
+      - "--strip-components=1"
+    owner: root
+    group: root
+    creates: "{{ mattermost_versioned_dir }}/bin/mattermost"
+  notify: Restart mattermost
+
+- name: Point install dir symlink at this version
+  ansible.builtin.file:
+    src: "{{ mattermost_versioned_dir }}"
+    dest: "{{ mattermost_install_dir }}"
+    state: link
+    force: true
+  notify: Restart mattermost
+
+- name: Ensure the app can write to its runtime tree
+  ansible.builtin.file:
+    path: "{{ mattermost_versioned_dir }}"
+    owner: root
+    group: "{{ mattermost_group }}"
+    recurse: true

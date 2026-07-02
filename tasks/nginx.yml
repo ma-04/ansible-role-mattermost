@@ -1,0 +1,52 @@
+---
+- name: Install nginx
+  ansible.builtin.package:
+    name: "{{ mattermost_nginx_packages }}"
+    state: present
+
+- name: Ensure nginx is enabled
+  ansible.builtin.systemd:
+    name: nginx
+    state: started
+    enabled: true
+
+- name: Create ACME webroot
+  ansible.builtin.file:
+    path: "{{ mattermost_letsencrypt_webroot }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: mattermost_tls_mode == 'letsencrypt'
+
+- name: Deploy Cloudflare Origin certificate
+  ansible.builtin.include_tasks: tls_cloudflare_origin.yml
+  when: mattermost_tls_mode == 'cloudflare_origin'
+
+- name: Obtain Let's Encrypt certificate
+  ansible.builtin.include_tasks: tls_letsencrypt.yml
+  when: mattermost_tls_mode == 'letsencrypt'
+
+- name: Remove default nginx site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload nginx
+
+- name: Render Mattermost vhost
+  ansible.builtin.template:
+    src: nginx-mattermost.conf.j2
+    dest: /etc/nginx/sites-available/mattermost.conf
+    owner: root
+    group: root
+    mode: "0644"
+  vars:
+    mattermost_nginx_stage: "final"
+  notify: Reload nginx
+
+- name: Enable Mattermost vhost
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/mattermost.conf
+    dest: /etc/nginx/sites-enabled/mattermost.conf
+    state: link
+  notify: Reload nginx

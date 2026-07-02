@@ -1,0 +1,12 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    mattermost_site_url: "http://mattermost.test"
+    mattermost_db_type: "local"
+    mattermost_db_password: "molecule-test-password"
+    mattermost_nginx_enabled: true
+    mattermost_tls_mode: "none"
+  roles:
+    - role: mattermost

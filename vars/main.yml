@@ -1,0 +1,34 @@
+---
+# Internal constants — not meant to be overridden by users.
+
+mattermost_download_base_url: "https://releases.mattermost.com"
+# Team Edition tarballs are "mattermost-team-<ver>-...", Enterprise is "mattermost-<ver>-...".
+mattermost_download_filename: >-
+  {{ 'mattermost-team-' if mattermost_edition == 'team' else 'mattermost-' }}{{ mattermost_version }}-linux-amd64.tar.gz
+mattermost_download_url: "{{ mattermost_download_base_url }}/{{ mattermost_version }}/{{ mattermost_download_filename | trim }}"
+
+# Versioned install target; mattermost_install_dir symlinks to this.
+mattermost_versioned_dir: "/opt/mattermost-{{ mattermost_version }}"
+
+# Effective DB connection parameters (local mode overrides host/ssl).
+mattermost_db_host_effective: "{{ '127.0.0.1' if mattermost_db_type == 'local' else mattermost_db_host }}"
+mattermost_db_sslmode_effective: "{{ 'disable' if mattermost_db_type == 'local' else mattermost_db_sslmode }}"
+# urlencode keeps "/" in its safe set, but an unencoded "/" would terminate the URL
+# authority when the DSN is parsed, so escape it explicitly in the password.
+mattermost_db_userinfo: "{{ mattermost_db_user | urlencode }}:{{ mattermost_db_password | urlencode | replace('/', '%2F') }}"
+mattermost_db_netloc: "{{ mattermost_db_host_effective }}:{{ mattermost_db_port }}"
+mattermost_db_params: "sslmode={{ mattermost_db_sslmode_effective }}&connect_timeout=10"
+mattermost_db_dsn: "postgres://{{ mattermost_db_userinfo }}@{{ mattermost_db_netloc }}/{{ mattermost_db_name }}?{{ mattermost_db_params }}"
+
+# TLS certificate paths chosen by mattermost_tls_mode.
+mattermost_tls_cert_path: >-
+  {{ '/etc/letsencrypt/live/' + mattermost_domain + '/fullchain.pem'
+     if mattermost_tls_mode == 'letsencrypt'
+     else mattermost_ssl_dir + '/origin.pem' }}
+mattermost_tls_key_path: >-
+  {{ '/etc/letsencrypt/live/' + mattermost_domain + '/privkey.pem'
+     if mattermost_tls_mode == 'letsencrypt'
+     else mattermost_ssl_dir + '/origin.key' }}
+
+# Cloudflare API base.
+mattermost_cloudflare_api_base: "https://api.cloudflare.com/client/v4"

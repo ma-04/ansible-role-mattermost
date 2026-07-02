@@ -1,0 +1,22 @@
+---
+- name: Install ufw
+  ansible.builtin.package:
+    name: "{{ mattermost_firewall_packages }}"
+    state: present
+
+- name: Allow HTTP/HTTPS through ufw
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "80"
+    - "443"
+  when: mattermost_nginx_enabled | bool
+
+- name: Allow the Mattermost app port when no proxy is used
+  community.general.ufw:
+    rule: allow
+    port: "{{ mattermost_listen_port }}"
+    proto: tcp
+  when: not (mattermost_nginx_enabled | bool)

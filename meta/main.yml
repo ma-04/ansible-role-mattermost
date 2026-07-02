@@ -1,0 +1,32 @@
+---
+galaxy_info:
+  role_name: mattermost
+  namespace: community
+  author: ma-04
+  description: >-
+    Install and configure Mattermost (Team Edition) from the official tarball
+    under systemd, with a local or external PostgreSQL database, an nginx reverse
+    proxy with Let's Encrypt or Cloudflare Origin TLS, optional Cloudflare API
+    integration (DNS record + zone SSL mode), and GitLab/OIDC OAuth SSO.
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+        - noble
+  galaxy_tags:
+    - mattermost
+    - chat
+    - collaboration
+    - postgresql
+    - nginx
+    - cloudflare
+    - oauth
+
+dependencies: []

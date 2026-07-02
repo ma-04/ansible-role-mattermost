@@ -1,0 +1,43 @@
+---
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install tooling
+        run: pip install ansible-lint yamllint
+      - name: Install collections
+        run: ansible-galaxy collection install -r requirements.yml
+      - name: yamllint
+        run: yamllint .
+      - name: ansible-lint
+        run: ansible-lint
+
+  molecule:
+    name: Molecule
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install tooling
+        run: pip install "molecule-plugins[docker]" molecule ansible-core docker
+      - name: Run molecule
+        run: molecule test
+        env:
+          PY_COLORS: "1"
+          ANSIBLE_FORCE_COLOR: "1"

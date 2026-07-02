@@ -1,0 +1,8 @@
+---
+- name: Configure local PostgreSQL
+  ansible.builtin.include_tasks: database_local.yml
+  when: mattermost_db_type == 'local'
+
+- name: Validate external database
+  ansible.builtin.include_tasks: database_external.yml
+  when: mattermost_db_type == 'external'

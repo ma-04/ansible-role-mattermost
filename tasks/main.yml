@@ -1,0 +1,49 @@
+---
+- name: Load OS-specific variables
+  ansible.builtin.include_vars: "{{ lookup('ansible.builtin.first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_facts.distribution }}.yml"
+        - "{{ ansible_facts.os_family }}.yml"
+      paths:
+        - "vars"
+
+- name: Run preflight assertions
+  ansible.builtin.import_tasks: preflight.yml
+  tags: [always]
+
+- name: Create service account
+  ansible.builtin.import_tasks: user.yml
+  tags: [install]
+
+- name: Install Mattermost
+  ansible.builtin.import_tasks: install.yml
+  tags: [install]
+
+- name: Configure database
+  ansible.builtin.import_tasks: database.yml
+  tags: [database]
+
+- name: Render Mattermost configuration
+  ansible.builtin.import_tasks: config.yml
+  tags: [config]
+
+- name: Configure systemd service
+  ansible.builtin.import_tasks: systemd.yml
+  tags: [service]
+
+- name: Configure reverse proxy and TLS
+  ansible.builtin.import_tasks: nginx.yml
+  when: mattermost_nginx_enabled | bool
+  tags: [nginx, tls]
+
+- name: Configure Cloudflare integration
+  ansible.builtin.import_tasks: cloudflare.yml
+  when: mattermost_cloudflare_enabled | bool
+  tags: [cloudflare]
+
+- name: Configure firewall
+  ansible.builtin.import_tasks: firewall.yml
+  when: mattermost_configure_firewall | bool
+  tags: [firewall]

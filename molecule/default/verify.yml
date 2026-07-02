@@ -1,0 +1,43 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+
+    - name: Mattermost service is running
+      ansible.builtin.assert:
+        that:
+          - services['mattermost.service'].state == 'running'
+        fail_msg: "mattermost.service is not running"
+
+    - name: config.json exists with the expected settings
+      ansible.builtin.command: "grep -q '\"DriverName\": \"postgres\"' /etc/mattermost/config.json"
+      changed_when: false
+
+    - name: Wait for the Mattermost API to answer
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:8065/api/v4/system/ping"
+        status_code: 200
+        return_content: true
+      register: mattermost_ping
+      retries: 30
+      delay: 5
+      until: mattermost_ping.status == 200
+
+    - name: Ping reports status OK
+      ansible.builtin.assert:
+        that:
+          - mattermost_ping.json.status == 'OK'
+
+    - name: nginx configuration is valid
+      ansible.builtin.command: nginx -t
+      changed_when: false
+
+    - name: Mattermost is reachable through nginx
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/api/v4/system/ping"
+        headers:
+          Host: "mattermost.test"
+        status_code: 200

@@ -1,0 +1,43 @@
+---
+- name: Install certbot
+  ansible.builtin.package:
+    name: "{{ mattermost_certbot_packages }}"
+    state: present
+
+- name: Render bootstrap (HTTP-only) vhost for the ACME challenge
+  ansible.builtin.template:
+    src: nginx-mattermost.conf.j2
+    dest: /etc/nginx/sites-available/mattermost.conf
+    owner: root
+    group: root
+    mode: "0644"
+  vars:
+    mattermost_nginx_stage: "bootstrap"
+
+- name: Enable bootstrap vhost
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/mattermost.conf
+    dest: /etc/nginx/sites-enabled/mattermost.conf
+    state: link
+
+- name: Reload nginx to serve the ACME challenge
+  ansible.builtin.systemd:
+    name: nginx
+    state: reloaded
+
+- name: Obtain certificate via webroot
+  ansible.builtin.command:
+    argv:
+      - certbot
+      - certonly
+      - --webroot
+      - -w
+      - "{{ mattermost_letsencrypt_webroot }}"
+      - -d
+      - "{{ mattermost_domain }}"
+      - --email
+      - "{{ mattermost_letsencrypt_email }}"
+      - --agree-tos
+      - --non-interactive
+      - --keep-until-expiring
+    creates: "{{ mattermost_tls_cert_path }}"

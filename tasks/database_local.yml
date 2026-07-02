@@ -1,0 +1,39 @@
+---
+- name: Install PostgreSQL packages
+  ansible.builtin.package:
+    name: "{{ mattermost_postgresql_packages }}"
+    state: present
+
+- name: Ensure PostgreSQL is running and enabled
+  ansible.builtin.systemd:
+    name: "{{ mattermost_postgresql_service }}"
+    state: started
+    enabled: true
+
+- name: Create Mattermost database role
+  community.postgresql.postgresql_user:
+    name: "{{ mattermost_db_user }}"
+    password: "{{ mattermost_db_password }}"
+    state: present
+  become: true
+  become_user: postgres
+  no_log: true
+
+- name: Create Mattermost database
+  community.postgresql.postgresql_db:
+    name: "{{ mattermost_db_name }}"
+    owner: "{{ mattermost_db_user }}"
+    encoding: "UTF-8"
+    state: present
+  become: true
+  become_user: postgres
+
+- name: Grant privileges on the database to the role
+  community.postgresql.postgresql_privs:
+    database: "{{ mattermost_db_name }}"
+    roles: "{{ mattermost_db_user }}"
+    type: database
+    privs: ALL
+    state: present
+  become: true
+  become_user: postgres

@@ -1,0 +1,53 @@
+---
+- name: Assemble base Mattermost configuration
+  ansible.builtin.set_fact:
+    _mattermost_base_config:
+      ServiceSettings:
+        SiteURL: "{{ mattermost_site_url }}"
+        ListenAddress: "{{ mattermost_bind_address }}:{{ mattermost_listen_port }}"
+      SqlSettings:
+        DriverName: "postgres"
+        DataSource: "{{ mattermost_db_dsn | trim }}"
+      FileSettings:
+        Directory: "{{ mattermost_data_dir }}/"
+      LogSettings:
+        EnableFile: true
+        FileLocation: "{{ mattermost_log_dir }}"
+      PluginSettings:
+        Directory: "{{ mattermost_plugin_dir }}"
+        ClientDirectory: "{{ mattermost_plugin_client_dir }}"
+  no_log: true
+
+- name: Assemble GitLab/OIDC auth configuration
+  ansible.builtin.set_fact:
+    _mattermost_gitlab_config:
+      GitLabSettings:
+        Enable: true
+        Id: "{{ mattermost_gitlab_client_id }}"
+        Secret: "{{ mattermost_gitlab_client_secret }}"
+        Scope: "{{ mattermost_gitlab_scope }}"
+        AuthEndpoint: "{{ mattermost_gitlab_auth_endpoint }}"
+        TokenEndpoint: "{{ mattermost_gitlab_token_endpoint }}"
+        UserAPIEndpoint: "{{ mattermost_gitlab_user_api_endpoint }}"
+        ButtonText: "{{ mattermost_gitlab_button_text }}"
+        ButtonColor: "{{ mattermost_gitlab_button_color }}"
+  no_log: true
+  when: mattermost_gitlab_auth_enabled | bool
+
+- name: Merge configuration layers
+  ansible.builtin.set_fact:
+    mattermost_config: >-
+      {{ _mattermost_base_config
+         | combine(_mattermost_gitlab_config | default({}), recursive=True)
+         | combine(mattermost_config_extra, recursive=True) }}
+  no_log: true
+
+- name: Write config.json
+  ansible.builtin.copy:
+    content: "{{ mattermost_config | to_nice_json }}"
+    dest: "{{ mattermost_config_path }}"
+    owner: "{{ mattermost_user }}"
+    group: "{{ mattermost_group }}"
+    mode: "0600"
+  no_log: true
+  notify: Restart mattermost

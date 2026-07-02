@@ -1,0 +1,62 @@
+---
+- name: Assert DNS record content is set
+  ansible.builtin.assert:
+    that:
+      - mattermost_cloudflare_record_content | length > 0
+    fail_msg: "mattermost_cloudflare_manage_dns requires mattermost_cloudflare_record_content (e.g. the server IP)."
+    quiet: true
+
+- name: Build DNS records API URL
+  ansible.builtin.set_fact:
+    mattermost_cf_dns_url: "{{ mattermost_cloudflare_api_base }}/zones/{{ mattermost_cf_zone_id }}/dns_records"
+  no_log: true
+
+- name: Look up existing DNS record
+  ansible.builtin.uri:
+    url: "{{ mattermost_cf_dns_url }}?type={{ mattermost_cloudflare_record_type }}&name={{ mattermost_domain }}"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ mattermost_cloudflare_api_token }}"
+      Content-Type: "application/json"
+    status_code: 200
+  register: mattermost_cf_record
+  no_log: true
+
+- name: Build desired DNS record body
+  ansible.builtin.set_fact:
+    mattermost_cf_record_body:
+      type: "{{ mattermost_cloudflare_record_type }}"
+      name: "{{ mattermost_domain }}"
+      content: "{{ mattermost_cloudflare_record_content }}"
+      proxied: "{{ mattermost_cloudflare_proxied | bool }}"
+      ttl: 1
+
+- name: Create DNS record
+  ansible.builtin.uri:
+    url: "{{ mattermost_cloudflare_api_base }}/zones/{{ mattermost_cf_zone_id }}/dns_records"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ mattermost_cloudflare_api_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body: "{{ mattermost_cf_record_body }}"
+    status_code: 200
+  no_log: true
+  when: mattermost_cf_record.json.result | length == 0
+
+- name: Update DNS record
+  ansible.builtin.uri:
+    url: "{{ mattermost_cf_dns_url }}/{{ mattermost_cf_record.json.result[0].id }}"
+    method: PUT
+    headers:
+      Authorization: "Bearer {{ mattermost_cloudflare_api_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body: "{{ mattermost_cf_record_body }}"
+    status_code: 200
+  no_log: true
+  when:
+    - mattermost_cf_record.json.result | length > 0
+    - >-
+      mattermost_cf_record.json.result[0].content != mattermost_cloudflare_record_content
+      or mattermost_cf_record.json.result[0].proxied != (mattermost_cloudflare_proxied | bool)

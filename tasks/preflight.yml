@@ -1,0 +1,75 @@
+---
+- name: Assert core required variables are set
+  ansible.builtin.assert:
+    that:
+      - mattermost_site_url | length > 0
+      - mattermost_domain | length > 0
+      - mattermost_db_password | length > 0
+    fail_msg: >-
+      mattermost_site_url, a resolvable mattermost_domain, and mattermost_db_password
+      are all required. Store secrets in Ansible Vault.
+    quiet: true
+
+- name: Assert database type is valid
+  ansible.builtin.assert:
+    that:
+      - mattermost_db_type in ['local', 'external']
+    fail_msg: "mattermost_db_type must be 'local' or 'external'."
+    quiet: true
+
+- name: Assert external database connection details are present
+  ansible.builtin.assert:
+    that:
+      - mattermost_db_host | length > 0
+      - mattermost_db_user | length > 0
+    fail_msg: "External database requires mattermost_db_host and mattermost_db_user."
+    quiet: true
+  when: mattermost_db_type == 'external'
+
+- name: Assert TLS mode is valid
+  ansible.builtin.assert:
+    that:
+      - mattermost_tls_mode in ['letsencrypt', 'cloudflare_origin', 'none']
+    fail_msg: "mattermost_tls_mode must be 'letsencrypt', 'cloudflare_origin', or 'none'."
+    quiet: true
+
+- name: Assert Let's Encrypt email is set
+  ansible.builtin.assert:
+    that:
+      - mattermost_letsencrypt_email | length > 0
+    fail_msg: "mattermost_tls_mode=letsencrypt requires mattermost_letsencrypt_email."
+    quiet: true
+  when:
+    - mattermost_nginx_enabled | bool
+    - mattermost_tls_mode == 'letsencrypt'
+
+- name: Assert Cloudflare Origin certificate material is provided
+  ansible.builtin.assert:
+    that:
+      - mattermost_cloudflare_origin_cert | length > 0
+      - mattermost_cloudflare_origin_key | length > 0
+    fail_msg: >-
+      mattermost_tls_mode=cloudflare_origin requires mattermost_cloudflare_origin_cert
+      and mattermost_cloudflare_origin_key (PEM contents).
+    quiet: true
+  when:
+    - mattermost_nginx_enabled | bool
+    - mattermost_tls_mode == 'cloudflare_origin'
+
+- name: Assert Cloudflare API details are present
+  ansible.builtin.assert:
+    that:
+      - mattermost_cloudflare_api_token | length > 0
+      - mattermost_cloudflare_zone | length > 0
+    fail_msg: "Cloudflare integration requires mattermost_cloudflare_api_token and mattermost_cloudflare_zone."
+    quiet: true
+  when: mattermost_cloudflare_enabled | bool
+
+- name: Assert GitLab OAuth details are present
+  ansible.builtin.assert:
+    that:
+      - mattermost_gitlab_client_id | length > 0
+      - mattermost_gitlab_client_secret | length > 0
+    fail_msg: "GitLab/OIDC auth requires mattermost_gitlab_client_id and mattermost_gitlab_client_secret."
+    quiet: true
+  when: mattermost_gitlab_auth_enabled | bool

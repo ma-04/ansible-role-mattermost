@@ -1,0 +1,18 @@
+---
+# Debian/Ubuntu package names.
+mattermost_base_packages:
+  - tar
+  - ca-certificates
+mattermost_postgresql_packages:
+  - postgresql
+  - postgresql-contrib
+  - python3-psycopg2
+mattermost_nginx_packages:
+  - nginx
+mattermost_certbot_packages:
+  - certbot
+mattermost_firewall_packages:
+  - ufw
+
+# PostgreSQL service name used by the restart handler / local DB tasks.
+mattermost_postgresql_service: "postgresql"

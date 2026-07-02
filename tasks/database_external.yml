@@ -1,0 +1,13 @@
+---
+- name: Assert external database credentials are present
+  ansible.builtin.assert:
+    that:
+      - mattermost_db_password | length > 0
+    fail_msg: "External database requires mattermost_db_password."
+    quiet: true
+
+- name: Wait for the external database to be reachable
+  ansible.builtin.wait_for:
+    host: "{{ mattermost_db_host }}"
+    port: "{{ mattermost_db_port }}"
+    timeout: 30

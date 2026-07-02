@@ -1,0 +1,31 @@
+---
+- name: Look up Cloudflare zone id
+  ansible.builtin.uri:
+    url: "{{ mattermost_cloudflare_api_base }}/zones?name={{ mattermost_cloudflare_zone }}"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ mattermost_cloudflare_api_token }}"
+      Content-Type: "application/json"
+    status_code: 200
+  register: mattermost_cf_zone
+  no_log: true
+
+- name: Assert the zone was found
+  ansible.builtin.assert:
+    that:
+      - mattermost_cf_zone.json.result | length > 0
+    fail_msg: "Cloudflare zone '{{ mattermost_cloudflare_zone }}' not found for this token."
+    quiet: true
+
+- name: Set zone id fact
+  ansible.builtin.set_fact:
+    mattermost_cf_zone_id: "{{ mattermost_cf_zone.json.result[0].id }}"
+  no_log: true
+
+- name: Manage DNS record
+  ansible.builtin.include_tasks: cloudflare_dns.yml
+  when: mattermost_cloudflare_manage_dns | bool
+
+- name: Manage zone SSL mode
+  ansible.builtin.include_tasks: cloudflare_settings.yml
+  when: mattermost_cloudflare_manage_ssl | bool
