@@ -4,6 +4,10 @@ mattermost_base_packages:
   - ca-certificates
   - curl
   - gnupg
+# Extra packages needed to unpack the release tarball (tarball method).
+mattermost_tarball_packages:
+  - ca-certificates
+  - tar
 mattermost_postgresql_packages:
   - postgresql
   - postgresql-contrib

@@ -1,12 +1,16 @@
 # Ansible Role: Mattermost
 
-Installs and configures [Mattermost](https://mattermost.com/) (Team Edition) from the
-official Mattermost APT repository.
+Installs and configures [Mattermost](https://mattermost.com/) from either the official
+Mattermost APT repository or a release tarball.
 
 ## Features
 
-- **APT install** from the official Mattermost repository (`deb.packages.mattermost.com`) to
-  `/opt/mattermost`, using the package's systemd unit (upgrades via `apt` / version bump).
+- **Two install methods** (`mattermost_install_method`):
+  - `apt` — official Mattermost repository (`deb.packages.mattermost.com`) to `/opt/mattermost`,
+    using the package's systemd unit (community edition).
+  - `tarball` — official release from `releases.mattermost.com`, choosing the **team** or
+    **enterprise** edition, installed to a versioned dir symlinked at `/opt/mattermost` with a
+    role-managed systemd unit and config/data kept outside the versioned dir for clean upgrades.
 - **Database**: install a **local PostgreSQL** or connect to an **external** managed PostgreSQL.
 - **nginx reverse proxy** with your choice of TLS:
   - Let's Encrypt (certbot, webroot),
@@ -33,8 +37,10 @@ See [`defaults/main.yml`](defaults/main.yml) for the full, documented list. The 
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `mattermost_edition` | `community` | Edition to install. The APT server package runs as the free community edition. |
-| `mattermost_version` | `""` | Version to pin, e.g. `11.8.2` (the `-0` revision is appended automatically); empty installs the latest. |
+| `mattermost_install_method` | `apt` | `apt` (community, from the repo) or `tarball` (team/enterprise, from a release). |
+| `mattermost_edition` | `community` | `community` for `apt`; `team` or `enterprise` for `tarball`. |
+| `mattermost_version` | `""` | apt: version to pin (e.g. `11.8.2`, `-0` appended), empty = latest. tarball: **required** release (e.g. `9.11.9`). |
+| `mattermost_checksum` | `""` | Optional `sha256:...` checksum for the tarball download. |
 | `mattermost_site_url` | `""` | **Required.** Public URL, e.g. `https://chat.example.com`. |
 | `mattermost_db_type` | `local` | `local` (role installs PostgreSQL) or `external`. |
 | `mattermost_db_password` | `""` | **Required.** Store in Vault. |
@@ -100,12 +106,34 @@ Secrets (`mattermost_db_password`, `mattermost_gitlab_client_secret`,
         mattermost_gitlab_user_api_endpoint: "https://keycloak.example.com/realms/main/protocol/openid-connect/userinfo"
 ```
 
+### Tarball install of a specific Enterprise Edition release
+
+```yaml
+- hosts: chat
+  become: true
+  roles:
+    - role: mattermost
+      vars:
+        mattermost_install_method: tarball
+        mattermost_edition: enterprise      # or "team"
+        mattermost_version: "9.11.9"        # required for the tarball method
+        mattermost_checksum: "sha256:..."   # optional but recommended
+        mattermost_site_url: "https://chat.example.com"
+        mattermost_db_type: local
+        mattermost_db_password: "{{ vault_mm_db_password }}"
+        mattermost_tls_mode: letsencrypt
+        mattermost_letsencrypt_email: admin@example.com
+```
+
 ## Upgrades
 
-Set `mattermost_version` to a newer APT version (or leave it empty and run `apt upgrade
-mattermost`) and re-run the role. The package is upgraded in place and the service restarts.
-Config (`/opt/mattermost/config/config.json`) and data (`/opt/mattermost/data`) are managed
-separately from the package files and are preserved across upgrades.
+- **apt method**: set `mattermost_version` to a newer version (or leave it empty and run
+  `apt upgrade mattermost`) and re-run. The package upgrades in place. Config
+  (`/opt/mattermost/config/config.json`) and data (`/opt/mattermost/data`) persist.
+- **tarball method**: bump `mattermost_version` and re-run. The new release is extracted to
+  `/opt/mattermost-<version>` and the `/opt/mattermost` symlink is repointed; config
+  (`/etc/mattermost`) and data (`/var/opt/mattermost`) live outside the versioned dir and are
+  untouched.
 
 ## Testing
 

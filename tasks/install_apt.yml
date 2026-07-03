@@ -1,0 +1,44 @@
+---
+- name: Install repository prerequisites
+  ansible.builtin.apt:
+    name: "{{ mattermost_base_packages }}"
+    state: present
+    update_cache: true
+
+- name: Download Mattermost APT signing key
+  ansible.builtin.get_url:
+    url: "{{ mattermost_apt_key_url }}"
+    dest: /tmp/mattermost-pubkey.asc
+    mode: "0644"
+
+- name: Install Mattermost APT keyring
+  ansible.builtin.command:
+    cmd: "gpg --dearmor -o {{ mattermost_apt_keyring }} /tmp/mattermost-pubkey.asc"
+    creates: "{{ mattermost_apt_keyring }}"
+
+- name: Add Mattermost APT repository
+  ansible.builtin.apt_repository:
+    repo: "{{ mattermost_apt_repo_line }}"
+    filename: mattermost
+    state: present
+    update_cache: true
+
+- name: Install Mattermost
+  ansible.builtin.apt:
+    name: "{{ mattermost_package_spec }}"
+    state: present
+    update_cache: true
+  notify: Restart mattermost
+
+- name: Ensure runtime directories exist with correct ownership
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ mattermost_user }}"
+    group: "{{ mattermost_group }}"
+    mode: "0750"
+  loop:
+    - "{{ mattermost_data_dir }}"
+    - "{{ mattermost_log_dir }}"
+    - "{{ mattermost_plugin_dir }}"
+    - "{{ mattermost_plugin_client_dir }}"

@@ -10,14 +10,23 @@
       are all required. Store secrets in Ansible Vault.
     quiet: true
 
-- name: Assert edition is supported
+- name: Assert install method is valid
   ansible.builtin.assert:
     that:
-      - mattermost_edition == 'community'
-    fail_msg: >-
-      Only mattermost_edition=community is supported. The APT 'mattermost' package runs
-      the free community edition; apply an Enterprise license out of band to unlock EE features.
+      - mattermost_install_method in ['apt', 'tarball']
+    fail_msg: "mattermost_install_method must be 'apt' or 'tarball'."
     quiet: true
+
+- name: Assert tarball edition and version are set
+  ansible.builtin.assert:
+    that:
+      - mattermost_edition in ['team', 'enterprise']
+      - mattermost_version | length > 0
+    fail_msg: >-
+      The tarball method requires mattermost_edition to be 'team' or 'enterprise'
+      and mattermost_version to be set to a release (e.g. "9.11.9").
+    quiet: true
+  when: mattermost_install_method == 'tarball'
 
 - name: Assert database type is valid
   ansible.builtin.assert:

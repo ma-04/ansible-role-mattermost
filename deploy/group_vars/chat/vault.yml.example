@@ -1,0 +1,33 @@
+---
+# =============================================================================
+# SECRETS TEMPLATE — copy to vault.yml and encrypt with ansible-vault.
+#
+#   cp vault.yml.example vault.yml
+#   # edit vault.yml with your real secrets
+#   ansible-vault encrypt vault.yml
+#
+# vault.yml is git-ignored (see deploy/.gitignore). Never commit it unencrypted.
+# =============================================================================
+
+# PostgreSQL password for mattermost_db_user.
+vault_mm_db_password: "CHANGE_ME_DB_PASSWORD"
+
+# Cloudflare Origin certificate + private key (PEM) — only needed when
+# mattermost_tls_mode is "cloudflare_origin".
+# Generate at: Cloudflare dashboard > SSL/TLS > Origin Server > Create Certificate.
+# Paste the full PEM blocks below (keep the block scalar indentation).
+vault_mm_origin_cert: |
+  -----BEGIN CERTIFICATE-----
+  PASTE_CLOUDFLARE_ORIGIN_CERT_HERE
+  -----END CERTIFICATE-----
+
+vault_mm_origin_key: |
+  -----BEGIN PRIVATE KEY-----
+  PASTE_CLOUDFLARE_ORIGIN_PRIVATE_KEY_HERE
+  -----END PRIVATE KEY-----
+
+# Uncomment when mattermost_cloudflare_enabled is true.
+# vault_cf_api_token: "CHANGE_ME_CLOUDFLARE_API_TOKEN"
+
+# Uncomment when mattermost_gitlab_auth_enabled is true.
+# vault_mm_gitlab_client_secret: "CHANGE_ME_OAUTH_CLIENT_SECRET"

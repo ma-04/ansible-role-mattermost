@@ -1,0 +1,74 @@
+---
+# =============================================================================
+# Non-secret role configuration for the Mattermost host.
+# Copy to vars.yml and edit; secrets go in vault.yml (see vault.yml.example).
+#   cp vars.yml.example vars.yml
+# vars.yml is git-ignored (it holds environment-specific values).
+#
+# See ../../../defaults/main.yml for the full list of variables.
+# =============================================================================
+
+# ---- Install method / edition / version -------------------------------------
+# "apt"     -> official Mattermost repository (community edition). Default.
+# "tarball" -> official release; set edition to "team" or "enterprise".
+mattermost_install_method: "apt"
+# apt: "community". tarball: "team" or "enterprise".
+mattermost_edition: "community"
+# apt: version to pin, e.g. "11.8.2" (empty = latest).
+# tarball: REQUIRED exact release, e.g. "9.11.9".
+mattermost_version: ""
+# mattermost_checksum: "sha256:..."   # optional, for the tarball download
+
+# ---- Site / domain -----------------------------------------------------------
+# REQUIRED: the public URL users hit. TODO: set your real hostname.
+mattermost_site_url: "https://chat.example.com"
+
+# ---- Database ----------------------------------------------------------------
+# "local"    -> the role installs PostgreSQL on this host.
+# "external" -> connect to a managed PostgreSQL (shown below).
+mattermost_db_type: "external"
+mattermost_db_name: "mattermost"
+mattermost_db_user: "mmadmin"
+mattermost_db_password: "{{ vault_mm_db_password }}"
+mattermost_db_host: "db.example.com"       # external only; TODO: set real host
+mattermost_db_port: 5432
+mattermost_db_sslmode: "require"           # e.g. Azure PG Flexible requires TLS
+# For a local database, use instead:
+#   mattermost_db_type: "local"
+#   mattermost_db_password: "{{ vault_mm_db_password }}"
+
+# ---- Reverse proxy / TLS -----------------------------------------------------
+mattermost_nginx_enabled: true
+# "letsencrypt" | "cloudflare_origin" | "none"
+mattermost_tls_mode: "cloudflare_origin"
+mattermost_cloudflare_origin_cert: "{{ vault_mm_origin_cert }}"
+mattermost_cloudflare_origin_key: "{{ vault_mm_origin_key }}"
+# For Let's Encrypt instead:
+#   mattermost_tls_mode: "letsencrypt"
+#   mattermost_letsencrypt_email: "admin@example.com"
+
+# Host firewall (ufw). Leave false when a cloud NSG/security group handles it.
+mattermost_configure_firewall: false
+
+# ---- Cloudflare API integration (optional) -----------------------------------
+# When true, the role manages the DNS record and zone SSL mode via the API.
+mattermost_cloudflare_enabled: false
+# mattermost_cloudflare_api_token: "{{ vault_cf_api_token }}"
+# mattermost_cloudflare_zone: "example.com"
+# mattermost_cloudflare_record_content: "203.0.113.10"   # server public IP
+# mattermost_cloudflare_ssl_mode: "full"
+
+# ---- Auth: GitLab OAuth / generic OIDC (optional) ----------------------------
+mattermost_gitlab_auth_enabled: false
+# mattermost_gitlab_client_id: "mattermost"
+# mattermost_gitlab_client_secret: "{{ vault_mm_gitlab_client_secret }}"
+# Point these at any OIDC provider exposing GitLab-style OAuth endpoints (e.g. Keycloak):
+# mattermost_gitlab_auth_endpoint: "https://gitlab.com/oauth/authorize"
+# mattermost_gitlab_token_endpoint: "https://gitlab.com/oauth/token"
+# mattermost_gitlab_user_api_endpoint: "https://gitlab.com/api/v4/user"
+
+# ---- Extra config.json overrides (optional) ----------------------------------
+# Deep-merged last over everything the role sets.
+# mattermost_config_extra:
+#   TeamSettings:
+#     SiteName: "Example Chat"

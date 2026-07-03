@@ -1,0 +1,92 @@
+---
+- name: Install tarball prerequisites
+  ansible.builtin.apt:
+    name: "{{ mattermost_tarball_packages }}"
+    state: present
+    update_cache: true
+
+- name: Remove any APT-installed Mattermost package (conflicts with the tarball install)
+  ansible.builtin.apt:
+    name: "{{ mattermost_package }}"
+    state: absent
+    purge: true
+
+- name: Check the install path
+  ansible.builtin.stat:
+    path: "{{ mattermost_install_dir }}"
+    follow: false
+  register: mattermost_install_path
+
+- name: Remove leftover package directory so the version symlink can be created
+  ansible.builtin.file:
+    path: "{{ mattermost_install_dir }}"
+    state: absent
+  when:
+    - mattermost_install_path.stat.exists
+    - mattermost_install_path.stat.isdir | default(false)
+    - not (mattermost_install_path.stat.islnk | default(false))
+
+- name: Create Mattermost group
+  ansible.builtin.group:
+    name: "{{ mattermost_group }}"
+    system: true
+    state: present
+
+- name: Create Mattermost system user
+  ansible.builtin.user:
+    name: "{{ mattermost_user }}"
+    group: "{{ mattermost_group }}"
+    system: true
+    shell: "/usr/sbin/nologin"
+    home: "{{ mattermost_install_dir }}"
+    create_home: false
+    state: present
+
+- name: Create persistent directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ mattermost_user }}"
+    group: "{{ mattermost_group }}"
+    mode: "0750"
+  loop:
+    - "{{ mattermost_config_dir }}"
+    - "{{ mattermost_data_dir }}"
+    - "{{ mattermost_log_dir }}"
+    - "{{ mattermost_plugin_dir }}"
+    - "{{ mattermost_plugin_client_dir }}"
+
+- name: Download Mattermost tarball
+  ansible.builtin.get_url:
+    url: "{{ mattermost_tarball_url }}"
+    dest: "/tmp/{{ mattermost_tarball_filename }}"
+    checksum: "{{ mattermost_checksum | default(omit, true) }}"
+    mode: "0644"
+
+- name: Create versioned install directory
+  ansible.builtin.file:
+    path: "{{ mattermost_versioned_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Extract Mattermost
+  ansible.builtin.unarchive:
+    src: "/tmp/{{ mattermost_tarball_filename }}"
+    dest: "{{ mattermost_versioned_dir }}"
+    remote_src: true
+    extra_opts:
+      - "--strip-components=1"
+    owner: root
+    group: "{{ mattermost_group }}"
+    creates: "{{ mattermost_versioned_dir }}/bin/mattermost"
+  notify: Restart mattermost
+
+- name: Point install dir symlink at this version
+  ansible.builtin.file:
+    src: "{{ mattermost_versioned_dir }}"
+    dest: "{{ mattermost_install_dir }}"
+    state: link
+    force: true
+  notify: Restart mattermost

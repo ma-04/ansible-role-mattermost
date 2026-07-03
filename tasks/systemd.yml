@@ -1,32 +1,50 @@
 ---
-# The mattermost package ships its own systemd unit (inactive by default).
-# We only add a drop-in to order it after the local database, then enable it.
-- name: Create systemd drop-in directory
+# Tarball method: we own the whole unit. APT method: the package ships the unit,
+# so we only drop in a database ordering dependency.
+- name: Install systemd unit (tarball method)
+  ansible.builtin.template:
+    src: mattermost.service.j2
+    dest: /etc/systemd/system/mattermost.service
+    owner: root
+    group: root
+    mode: "0644"
+  when: mattermost_install_method == 'tarball'
+  notify:
+    - Reload systemd
+    - Restart mattermost
+
+- name: Create systemd drop-in directory (apt method)
   ansible.builtin.file:
     path: /etc/systemd/system/mattermost.service.d
     state: directory
     owner: root
     group: root
     mode: "0755"
-  when: mattermost_db_type == 'local'
+  when:
+    - mattermost_install_method == 'apt'
+    - mattermost_db_type == 'local'
 
-- name: Add local database dependency drop-in
+- name: Add local database dependency drop-in (apt method)
   ansible.builtin.template:
     src: mattermost-override.conf.j2
     dest: /etc/systemd/system/mattermost.service.d/override.conf
     owner: root
     group: root
     mode: "0644"
-  when: mattermost_db_type == 'local'
+  when:
+    - mattermost_install_method == 'apt'
+    - mattermost_db_type == 'local'
   notify:
     - Reload systemd
     - Restart mattermost
 
-- name: Remove database dependency drop-in when not using a local database
+- name: Remove database dependency drop-in when not applicable (apt method)
   ansible.builtin.file:
     path: /etc/systemd/system/mattermost.service.d/override.conf
     state: absent
-  when: mattermost_db_type != 'local'
+  when:
+    - mattermost_install_method == 'apt'
+    - mattermost_db_type != 'local'
   notify: Reload systemd
 
 - name: Flush handlers so unit changes are applied before start

@@ -1,33 +1,50 @@
 ---
 # =============================================================================
-# Installation (official Mattermost APT repository, Team Edition)
+# Installation
 # =============================================================================
-# Edition to install. The Mattermost APT repository ships a single server package
-# that runs as the free community edition unless an Enterprise license is applied,
-# so "community" is the default (and the supported value for this role).
-mattermost_edition: "community"
+# How to install Mattermost:
+#   "apt"     -> official Mattermost APT repository (enterprise edition only).
+#   "tarball" -> official release tarball from releases.mattermost.com; supports
+#                choosing the "team(free community edition)" or "enterprise" edition.
+mattermost_install_method: "tarball"
 
-# Version to install, e.g. "11.8.2". Leave empty to install the latest release
-# available in the repository. The packaging revision below is appended
-# automatically, so "11.8.2" resolves to the APT version "11.8.2-0".
-mattermost_version: ""
+# Edition:
+#   apt method     -> effectively "Enterprise" (the repo ships one server package).
+#   tarball method -> "team" (free community edition) or "enterprise" (needs a license for EE features).
+mattermost_edition: "team"
+
+# Version to install.
+#   apt method     -> version to pin, e.g. "11.8.2"; empty installs the latest.
+#                     The packaging revision below is appended, so "11.8.2" -> "11.8.2-0".
+#   tarball method -> exact release to download, e.g. "9.11.9" (REQUIRED).
+mattermost_version: "11.8.2"
 mattermost_package_revision: "0"
 mattermost_package: "mattermost"
+# Optional checksum for the tarball download, e.g. "sha256:abc123..." (empty skips).
+mattermost_checksum: ""
 
-# Official Mattermost APT repository.
+# Official Mattermost APT repository (apt method).
 mattermost_apt_repo_url: "https://deb.packages.mattermost.com"
 mattermost_apt_key_url: "https://deb.packages.mattermost.com/pubkey.gpg"
 mattermost_apt_keyring: "/usr/share/keyrings/mattermost-archive-keyring.gpg"
+# Release download base (tarball method).
+mattermost_release_base_url: "https://releases.mattermost.com"
 
-# Paths owned by the package. Change only if you repackage Mattermost.
-mattermost_install_dir: "/opt/mattermost"
 mattermost_user: "mattermost"
 mattermost_group: "mattermost"
-mattermost_config_path: "{{ mattermost_install_dir }}/config/config.json"
-mattermost_data_dir: "{{ mattermost_install_dir }}/data"
-mattermost_log_dir: "{{ mattermost_install_dir }}/logs"
-mattermost_plugin_dir: "{{ mattermost_install_dir }}/plugins"
-mattermost_plugin_client_dir: "{{ mattermost_install_dir }}/client/plugins"
+
+# Install/runtime paths. The apt package owns /opt/mattermost and keeps its config
+# and data underneath it; the tarball method installs versioned binaries under a
+# symlinked /opt/mattermost and keeps config/data OUTSIDE it so upgrades are clean.
+mattermost_install_dir: "/opt/mattermost"
+# apt keeps state under the package dir; tarball keeps it outside the versioned dir.
+mattermost_state_dir: "{{ '/var/opt/mattermost' if mattermost_install_method == 'tarball' else mattermost_install_dir }}"
+mattermost_config_dir: "{{ '/etc/mattermost' if mattermost_install_method == 'tarball' else mattermost_install_dir + '/config' }}"
+mattermost_config_path: "{{ mattermost_config_dir }}/config.json"
+mattermost_data_dir: "{{ mattermost_state_dir }}/data"
+mattermost_log_dir: "{{ mattermost_state_dir }}/logs"
+mattermost_plugin_dir: "{{ mattermost_state_dir }}/plugins"
+mattermost_plugin_client_dir: "{{ mattermost_state_dir }}/{{ 'client-plugins' if mattermost_install_method == 'tarball' else 'client/plugins' }}"
 
 # =============================================================================
 # Site / domain

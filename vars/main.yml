@@ -9,6 +9,13 @@ mattermost_version_full: "{{ mattermost_version if ('-' in mattermost_version) e
 # Package spec, optionally pinned to a version.
 mattermost_package_spec: "{{ mattermost_package }}{{ ('=' + mattermost_version_full) if (mattermost_version | length > 0) else '' }}"
 
+# Tarball method: Team Edition files are "mattermost-team-<ver>-...", Enterprise
+# Edition files are "mattermost-<ver>-..." (no suffix).
+mattermost_tarball_filename: "{{ ('mattermost-team-' if mattermost_edition == 'team' else 'mattermost-') }}{{ mattermost_version }}-linux-amd64.tar.gz"
+mattermost_tarball_url: "{{ mattermost_release_base_url }}/{{ mattermost_version }}/{{ mattermost_tarball_filename }}"
+# Versioned install target; mattermost_install_dir symlinks to this for the tarball method.
+mattermost_versioned_dir: "/opt/mattermost-{{ mattermost_version }}"
+
 # Effective DB connection parameters (local mode overrides host/ssl).
 mattermost_db_host_effective: "{{ '127.0.0.1' if mattermost_db_type == 'local' else mattermost_db_host }}"
 mattermost_db_sslmode_effective: "{{ 'disable' if mattermost_db_type == 'local' else mattermost_db_sslmode }}"

@@ -1,0 +1,6 @@
+# Real, environment-specific config stays local — only the *.example templates
+# are committed. Copy each *.example to its real filename and fill it in.
+inventory.ini
+group_vars/chat/vars.yml
+group_vars/chat/vault.yml
+*.retry
