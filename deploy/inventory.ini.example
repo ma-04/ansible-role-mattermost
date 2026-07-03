@@ -1,7 +1,4 @@
-# Copy to inventory.ini and fill in your host details.
-#   cp inventory.ini.example inventory.ini
-# inventory.ini is git-ignored (it holds environment-specific values).
-
+# cp inventory.ini.example inventory.ini  (inventory.ini is git-ignored)
 [chat]
 mattermost ansible_host=203.0.113.10
 

@@ -1,11 +1,4 @@
 ---
-# Mattermost deployment playbook.
-# Infra (VM + managed PostgreSQL) is already provisioned in Azure (rg-apps).
-# Non-secret vars live in group_vars/chat/vars.yml; secrets in group_vars/chat/vault.yml.
-#
-# Run:
-#   ansible-galaxy collection install -r ../requirements.yml
-#   ansible-playbook site.yml --ask-vault-pass
 - name: Deploy Mattermost
   hosts: chat
   become: true
