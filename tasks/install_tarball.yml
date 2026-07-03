@@ -75,7 +75,7 @@
   ansible.builtin.unarchive:
     src: "/tmp/{{ mattermost_tarball_filename }}"
     dest: "{{ mattermost_versioned_dir }}"
-    remote_src: true 
+    remote_src: true
     extra_opts:
       # --no-same-owner: extract as root regardless of the archive's uids/gids.
       # --no-overwrite-dir: keep the pre-created dest directory's own metadata.
