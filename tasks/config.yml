@@ -42,12 +42,44 @@
          | combine(mattermost_config_extra, recursive=True) }}
   no_log: true
 
+# Mattermost rewrites config.json on startup, expanding it with every default
+# setting and its own key ordering. Rather than overwrite that with our minimal
+# subset on every run (which would never be idempotent and would restart the
+# server needlessly), we read the persisted config, layer our managed settings
+# on top, and only write when the resulting data actually differs.
+- name: Check for an existing config.json
+  ansible.builtin.stat:
+    path: "{{ mattermost_config_path }}"
+  register: _mattermost_config_stat
+
+- name: Read the existing config.json
+  ansible.builtin.slurp:
+    src: "{{ mattermost_config_path }}"
+  register: _mattermost_existing_raw
+  when: _mattermost_config_stat.stat.exists
+  no_log: true
+
+- name: Parse the existing config.json
+  ansible.builtin.set_fact:
+    _mattermost_existing_config: >-
+      {{ (_mattermost_existing_raw.content | b64decode | from_json)
+         if (_mattermost_config_stat.stat.exists
+             and (_mattermost_existing_raw.content | default('') | length > 0))
+         else {} }}
+  no_log: true
+
+- name: Layer managed settings over the persisted config
+  ansible.builtin.set_fact:
+    _mattermost_desired_config: "{{ _mattermost_existing_config | combine(mattermost_config, recursive=True) }}"
+  no_log: true
+
 - name: Write config.json
   ansible.builtin.copy:
-    content: "{{ mattermost_config | to_nice_json }}"
+    content: "{{ _mattermost_desired_config | to_nice_json }}"
     dest: "{{ mattermost_config_path }}"
     owner: "{{ mattermost_user }}"
     group: "{{ mattermost_group }}"
     mode: "0600"
+  when: _mattermost_desired_config != _mattermost_existing_config
   no_log: true
   notify: Restart mattermost

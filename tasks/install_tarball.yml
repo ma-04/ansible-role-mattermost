@@ -77,7 +77,12 @@
     dest: "{{ mattermost_versioned_dir }}"
     remote_src: true
     extra_opts:
+      # --no-overwrite-dir: preserve the pre-created dest directory's own
+      # owner/mode instead of overwriting them from the archive's root entry,
+      # otherwise the "Create versioned install directory" task flip-flops it
+      # back on every subsequent run (breaking idempotence).
       - "--strip-components=1"
+      - "--no-overwrite-dir"
     owner: root
     group: "{{ mattermost_group }}"
     creates: "{{ mattermost_versioned_dir }}/bin/mattermost"
