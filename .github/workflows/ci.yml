@@ -30,13 +30,20 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     steps:
+      # Check out into a directory named after the role so that molecule's
+      # roles path (which includes the project's parent directory) can resolve
+      # `- role: mattermost` in converge.yml. Molecule 6+ no longer auto-symlinks
+      # the role under its Galaxy name.
       - uses: actions/checkout@v4
+        with:
+          path: mattermost
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install tooling
         run: pip install "molecule-plugins[docker]" molecule ansible-core docker
       - name: Run molecule
+        working-directory: mattermost
         run: molecule test
         env:
           PY_COLORS: "1"

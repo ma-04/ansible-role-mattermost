@@ -24,6 +24,11 @@ platforms:
 
 provisioner:
   name: ansible
+  env:
+    # Make `- role: mattermost` resolvable regardless of the checkout directory
+    # name: the parent of the project dir holds the role, and the ephemeral
+    # roles dir holds any galaxy-installed role dependencies.
+    ANSIBLE_ROLES_PATH: "${MOLECULE_PROJECT_DIRECTORY}/..:${MOLECULE_EPHEMERAL_DIRECTORY}/roles"
   playbooks:
     converge: converge.yml
     verify: verify.yml
